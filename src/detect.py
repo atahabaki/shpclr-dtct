@@ -3,7 +3,7 @@ import numpy as np
 from enum import Enum
 
 class Detective:
-    def __init__(self,lowerb,upperb,cornernum,data):
+    def __init__(self,lowerb,upperb,cornernum,area,data):
         """
         Initialize the members' values...
 
@@ -13,11 +13,13 @@ class Detective:
             lowerb (): Lower boundary of the wanted color in BGR form
             upperb (): Upper boundary of wanted color in BGR form
             cornernum (int): for detecting the shape by it's corner number
+            area (int): for detecting the shape by it's area
         """
         self.lowerb = lowerb
         self.upperb = upperb
         self.hsv_colors = cv.cvtColor(np.uint8([[lowerb,upperb]]), cv.COLOR_BGR2HSV)
         self.cornernum = cornernum
+        self.area = area
         self.data = data
         self.hsv = cv.cvtColor(self.data, cv.COLOR_BGR2HSV)
 
@@ -36,10 +38,10 @@ class Detective:
         x,y="",""
         for cnt in contours:
             approx = cv.approxPolyDP(cnt, .1*cv.arcLength(cnt,True), True)
-            area = cv.contourArea(approx)
+            _area = cv.contourArea(approx)
             x,y = approx[0][0]
             #print(x,y)
-            if area >= 90 and len(approx) == self.cornernum:
+            if _area >= self.area and len(approx) == self.cornernum:
                 cv.drawContours(self.data, [approx], -1, (0,0,0), 10)
         # Results showed in seperate Windows...
         if verbose:

@@ -7,7 +7,7 @@ cap = cv.VideoCapture("../media/0000-0129.mkv")
 
 while cap.isOpened():
     ret, frame = cap.read()
-    wow = dt(np.array([130,130,130]), np.array([255,255,255]),4,frame)
+    wow = dt(np.array([130,130,130]), np.array([255,255,255]),4,90,frame)
     shit,x,y = wow.get_x_y()
     if x != "" or y != "":
         print(x,y)
@@ -18,13 +18,13 @@ while cap.isOpened():
 cap.release()
 #"""
 """
-wow = dt(np.array([130,130,130]), np.array([255,255,255]),4,cv.imread("../media/out.jpg"))
+wow = dt(np.array([130,130,130]), np.array([255,255,255]),4,90,cv.imread("../media/out.jpg"))
 frame,x,y = wow.get_x_y(True)
 if x != "" or y != "":
     print(x,y)
 """
 """
-wow = dt(np.array([100,100,100]), np.array([255,255,255]),4,cv.imread("../media/out2.png"))
+wow = dt(np.array([100,100,100]), np.array([255,255,255]),4,90,cv.imread("../media/out2.png"))
 frame,x,y = wow.get_x_y(True)
 if x != "" or y != "":
     print(x,y)
