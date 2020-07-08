@@ -39,7 +39,7 @@ class Detective:
             area = cv.contourArea(approx)
             x,y = approx[0][0]
             #print(x,y)
-            if area >= 90:
+            if area >= 90 and len(approx) == self.cornernum:
                 cv.drawContours(self.data, [approx], -1, (0,0,0), 10)
         # Results showed in seperate Windows...
         if verbose:
