@@ -19,10 +19,14 @@ cap.release()
 #"""
 """
 wow = dt(np.array([130,130,130]), np.array([255,255,255]),4,cv.imread("../media/out.jpg"))
-wow.get_x_y(True)
+frame,x,y = wow.get_x_y(True)
+if x != "" or y != "":
+    print(x,y)
 """
 """
 wow = dt(np.array([100,100,100]), np.array([255,255,255]),4,cv.imread("../media/out2.png"))
-wow.get_x_y(True)
+frame,x,y = wow.get_x_y(True)
+if x != "" or y != "":
+    print(x,y)
 """
 cv.destroyAllWindows()
