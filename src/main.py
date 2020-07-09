@@ -8,7 +8,7 @@ cap = cv.VideoCapture("../media/0000-0129.mkv")
 while cap.isOpened():
     ret, frame = cap.read()
     wow = dt(np.array([130,130,130]), np.array([255,255,255]),4,90,frame)
-    shit,x,y = wow.get_x_y()
+    shit,x,y = wow.detect(showtxt=True, blur=True,verbose=True)
     if x != "" or y != "":
         print(x,y)
     cv.namedWindow("Frames", cv.WINDOW_NORMAL)
