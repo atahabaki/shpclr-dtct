@@ -44,6 +44,7 @@ class Detective:
         return cv.cvtColor(self.data, cv.COLOR_BGR2HSV)
 
     ### TODO Make another detection via GRAYSCALE and Threshold values
+    ### TODO Calculate the center and return x and y
 
     def calcBlur(self, verbose):
         """
@@ -92,6 +93,10 @@ class Detective:
                 print("len: ",len(approx))
                 print("contours: ",approx)
             if _area >= self.area and len(approx) == self.cornernum:
+                M = cv.moments(cnt)
+                cx = int(M['m10']/M['m00'])
+                cy = int(M['m01']/M['m00'])
+                cv.circle(self.data, (cx,cy), 5, (0,0,0), 1)
                 if verbose:
                     print("OK! Found @ "+str(x)+","+str(y))
                 if showtxt:
@@ -99,7 +104,7 @@ class Detective:
                 cv.drawContours(self.data, [approx], -1, (0,0,0), 10)
         return (x,y)
 
-    def detect(self,blur=False, showtxt=False,verbose=False, image_mode=False):
+    def detect(self,blur=False, showtxt=False,verbose=False):
         """
         Returns the shape boundaries drawen on image
 
@@ -108,10 +113,9 @@ class Detective:
         blur (bool): blurs the image for pure edges...
         showtxt (bool): shows text if set to True
         verbose (bool): shows every result... frame by frame...
-        image_mode (bool): shows nearly every step in a seperate window
         """
         if blur:
             self.calcBlur(verbose)
         contours=self.calcCnt(verbose)
-        x,y=self.drawContours(contours)
+        x,y=self.drawContours(contours,showtxt,verbose)
         return (self.data,x,y)
