@@ -44,7 +44,6 @@ class Detective:
         return cv.cvtColor(self.data, cv.COLOR_BGR2HSV)
 
     ### TODO Make another detection via GRAYSCALE and Threshold values
-    ### TODO Calculate the center and return x and y
 
     def calcBlur(self, verbose):
         """
@@ -96,6 +95,7 @@ class Detective:
                 M = cv.moments(cnt)
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
+                print("Center: {},{}".format(cx,cy))
                 cv.circle(self.data, (cx,cy), 5, (0,0,0), 1)
                 if verbose:
                     print("OK! Found @ "+str(x)+","+str(y))
