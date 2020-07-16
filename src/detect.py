@@ -3,7 +3,7 @@ import numpy as np
 from enum import Enum
 
 class Detective:
-    def __init__(self,lowerb,upperb,cornernum,area,data):
+    def __init__(self,lowerb,upperb,dimens,area,data):
         """
         Initialize the members' values...
 
@@ -12,12 +12,12 @@ class Detective:
             data (): Image or video raw data for shape and color detection...
             lowerb (): Lower boundary of the wanted color in BGR form
             upperb (): Upper boundary of wanted color in BGR form
-            cornernum (int): for detecting the shape by it's corner number
+            dimens (width,height): width and height for dimensions
             area (int): for detecting the shape by it's area
         """
         self.lowerb = lowerb
         self.upperb = upperb
-        self.cornernum = cornernum
+        self.dimens = dimens
         self.area = area
         self.data = data
         self.hsv_colors = self.cnvt2HSV()
@@ -91,7 +91,8 @@ class Detective:
             if verbose:
                 print("len: ",len(approx))
                 print("contours: ",approx)
-            if _area >= self.area and len(approx) == self.cornernum:
+                print("area",_area)
+            if _area >= self.area:
                 M = cv.moments(cnt)
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
@@ -114,6 +115,7 @@ class Detective:
         showtxt (bool): shows text if set to True
         verbose (bool): shows every result... frame by frame...
         """
+        self.data = cv.resize(self.data, self.dimens)
         if blur:
             self.calcBlur(verbose)
         contours=self.calcCnt(verbose)
