@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 
 class Shape:
-    def __init__(self, tmin, tmax, amin, amax, lowerb=None, upperb=None):
+    def __init__(self, tmin, tmax, amin, amax, lowerb=None, upperb=None, cmin=0,cmax=None):
         """
         Args:
         =====
@@ -12,6 +12,8 @@ class Shape:
         amax: max val of the object's area
         lowerb: BGR color code of the object's color
         upperb: BGR color code of the object's color
+        cmin: minimum number of corners the object has
+        cmax: maximum number of corners the object has
         """
         self.tmin = tmin
         self.tmax = tmax
@@ -129,8 +131,16 @@ class Detective:
             if drawContours:
                 cv.drawContours(img,[approx],-1,(0,0,0),10)
         return (img, cx, cy)
+    def detectByComplexAlgorithm(self,dimens=(720,405),erode=True,drawContours=True):
+        """
+        !!!Not tested yet.
+        Detects by number of corners (basically shape), color, area, threshold...
+        Also, compares color mask and threshold mask for better accuracy...
+        May result performance issues...
+        """
+        pass
 
-
+"""
 shape = Shape(150,255,60000,100000,np.array([100,100,100]),np.array([180,180,180]))
 detective = Detective(shape,cv.imread("media/out2.png"))
 img, cx, cy = detective.detectByColor()
@@ -138,6 +148,7 @@ img, cx, cy = detective.detectByColor()
 cv.imshow("img", img)
 cv.waitKey(0)
 cv.destroyAllWindows()
+"""
 """
 shape = Shape(150,255,100,100000)
 detective = Detective(shape,cv.imread("media/out3.png"))
