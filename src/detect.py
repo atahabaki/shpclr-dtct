@@ -1,123 +1,62 @@
 import cv2 as cv
 import numpy as np
-from enum import Enum
+
+class Shape:
+    def __init__(self, tmin, tmax, amin, amax):
+        """
+        Args:
+        =====
+        tmin: Threshold min val
+        tmax: Threshold min val
+        amin: min val of the object's area
+        amax: max val of the object's area
+        """
+        self.tmin = tmin
+        self.tmax = tmax
+        self.amin = amin
+        self.amax = amax
 
 class Detective:
-    def __init__(self,lowerb,upperb,dimens,area,data):
+    def __init__(self, shape, data, verbose=True):
         """
-        Initialize the members' values...
-
-        Arguments:
-        ----------
-            data (): Image or video raw data for shape and color detection...
-            lowerb (): Lower boundary of the wanted color in BGR form
-            upperb (): Upper boundary of wanted color in BGR form
-            dimens (width,height): width and height for dimensions
-            area (int): for detecting the shape by it's area
+        Args:
+        =====
+        shape (Shape): determines the specifications of the object which will be searched
+        data (Img): Mat object in C, which is basically an image data...
         """
-        self.lowerb = lowerb
-        self.upperb = upperb
-        self.dimens = dimens
-        self.area = area
+        if type(shape) == Shape:
+            self.shape = shape
+        else:
+            raise "unk. type shape"
         self.data = data
-        self.hsv_colors = self.cnvt2HSV()
-        self.hsv = self.calcHSV()
+        self.verbose = verbose
 
-    def cnvt2HSV(self, verbose=False):
+    def detectViaThreshold(self,picSize=(720,405),drawContours=True):
         """
-        Converts BGR upperb and lowerb 2 HSV colors
-
+        Detects object returns resized and blurred image, and X,Y coordinates of detected object
+        Returns:
+        ========
+        (image, x, y)
         Arguments:
-        ----------
-        verbose (bool): prints details
+        ==========
+        picSize (width, height): Determines the resize options just width & height
+        drawContours (bool): Draws contours if set to True
         """
-        return cv.cvtColor(np.uint8([[self.lowerb,self.upperb]]), cv.COLOR_BGR2HSV)
-
-    def calcHSV(self,verbose=False):
-        """
-        Just calculates hsv of given data
-
-        Arguments:
-        ----------
-        verbose (bool): prints details
-        """
-        return cv.cvtColor(self.data, cv.COLOR_BGR2HSV)
-
-    ### TODO Make another detection via GRAYSCALE and Threshold values
-
-    def calcBlur(self, verbose):
-        """
-        Converts data/frame/image to GaussianBlur-ed one.
-
-        Arguments:
-        ----------
-        verbose (bool): prints details
-        """
-        if verbose:
-            print("Calculating Blur")
-        self.data = cv.GaussianBlur(self.data, (5,5), 0)
-        self.hsv = self.calcHSV()
-
-    def calcCnt(self, verbose=False):
-        """
-        Calculates contours
-
-        Arguments:
-        ----------
-        verbose (bool): prints details
-        """
-        print("Calculating contours")
-        mask = cv.inRange(self.hsv, self.hsv_colors[0][0], self.hsv_colors[0][1])
-        kernel = np.ones((10,10),np.uint8)
-        mask = cv.erode(mask, kernel)
-        contours,_ = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-        return contours
-
-    def drawContours(self, contours, showtxt=False,verbose=False):
-        """
-        Draws, contours and shows a text.
-
-        Arguments:
-        ----------
-        showtxt (bool): shows text ıf set to true
-        """
-        x,y="",""
+        img = cv.resize(self.data,picSize)
+        img = cv.GaussianBlur(img,(7,7),1)
+        gry = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        _, thresh = cv.threshold(gry, self.shape.tmin, self.shape.tmax, cv.THRESH_BINARY_INV)
+        contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        cx,cy=None,None
         for cnt in contours:
-            approx = cv.approxPolyDP(cnt, .1*cv.arcLength(cnt,True), True)
-            _area = cv.contourArea(approx)
-            x,y = approx[0][0]
-            x1= approx[1][0][0]
-            appx1=int(float(x+x1)/2)
-            if verbose:
-                print("len: ",len(approx))
-                print("contours: ",approx)
-                print("area",_area)
-            if _area >= self.area:
-                M = cv.moments(cnt)
-                cx = int(M['m10']/M['m00'])
-                cy = int(M['m01']/M['m00'])
-                print("Center: {},{}".format(cx,cy))
-                cv.circle(self.data, (cx,cy), 5, (0,0,0), 1)
-                if verbose:
-                    print("OK! Found @ "+str(x)+","+str(y))
-                if showtxt:
-                    self.data=cv.putText(self.data, "here", (appx1,y-20), cv.FONT_HERSHEY_SIMPLEX, 3, (0,0,0), 3, cv.LINE_AA)  
-                cv.drawContours(self.data, [approx], -1, (0,0,0), 10)
-        return (x,y)
-
-    def detect(self,blur=False, showtxt=False,verbose=False):
-        """
-        Returns the shape boundaries drawen on image
-
-        Arguments:
-        ----------
-        blur (bool): blurs the image for pure edges...
-        showtxt (bool): shows text if set to True
-        verbose (bool): shows every result... frame by frame...
-        """
-        self.data = cv.resize(self.data, self.dimens)
-        if blur:
-            self.calcBlur(verbose)
-        contours=self.calcCnt(verbose)
-        x,y=self.drawContours(contours,showtxt,verbose)
-        return (self.data,x,y)
+            approx = cv.approxPolyDP(cnt, .001*cv.arcLength(cnt, True), True)
+            area = cv.contourArea(approx)
+            if self.verbose:
+                print("area",area)
+            if area <= self.shape.amax and area >= self.shape.amin:
+                M = cv.moments(approx)
+                cx, cy = (int(M['m10']/M['m00']),int(M['m01']/M['m00']))
+                print("center:",(cx,cy))
+                if drawContours:
+                    cv.drawContours(img,[approx],-1,(0,0,0),10)
+        return (img, cx, cy)
