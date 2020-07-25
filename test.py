@@ -23,7 +23,7 @@ class Shape:
         self.upperb = upperb
 
 class Detective:
-    def __init__(self, shape, data, verbose=True):
+    def __init__(self, shape, data, erodeSize=(5,5), verbose=True):
         """
         Args:
         =====
@@ -36,6 +36,7 @@ class Detective:
             raise "unk. type shape"
         self.data = data
         self.verbose = verbose
+        self.erodeSize=erodeSize
 
     def resizeImg(self, dimens):
         return cv.resize(self.data,dimens)
@@ -58,17 +59,18 @@ class Detective:
         _, thresh = cv.threshold(gry, self.shape.tmin, self.shape.tmax, cv.THRESH_BINARY_INV)
         contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         cx,cy=None,None
-        for cnt in contours:
+        for i,cnt in enumerate(contours,start=0):
             approx = cv.approxPolyDP(cnt, .001*cv.arcLength(cnt, True), True)
             area = cv.contourArea(approx)
             if self.verbose:
+                print("contours:",len(approx))
                 print("area",area)
             if area >= self.shape.amin and area <= self.shape.amax:
                 M = cv.moments(approx)
                 cx, cy = (int(M['m10']/M['m00']),int(M['m01']/M['m00']))
                 print("center:",(cx,cy))
                 if drawContours:
-                    cv.drawContours(img,[approx],-1,(0,0,0),10)
+                    cv.drawContours(img,[approx],i,(0,0,0),10)
         return (img, cx, cy)
     def detectByColor(self,dimens=(720,405),erode=True,drawContours=True):
         """
@@ -86,20 +88,21 @@ class Detective:
         img = self.blurImg(img)
         mask = cv.inRange(img, self.shape.lowerb, self.shape.upperb)
         if erode:
-            mask = cv.erode(mask, np.ones((20,20),np.uint8))
+            mask = cv.erode(mask, np.ones(self.erodeSize,np.uint8))
         contours, _ = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         cx,cy=None,None
-        for cnt in contours:
+        for i,cnt in enumerate(contours,start=0):
             approx = cv.approxPolyDP(cnt, .001*cv.arcLength(cnt, True), True)
             area = cv.contourArea(approx)
             if self.verbose:
-                print("area",area)
+                print("contours:",len(approx))
+                print("area:",area)
             if area >= self.shape.amin and area <= self.shape.amax:
                 M = cv.moments(approx)
                 cx, cy = (int(M['m10']/M['m00']),int(M['m01']/M['m00']))
                 print("center:",(cx,cy))
                 if drawContours:
-                    cv.drawContours(img,[approx],-1,(0,0,0),10)
+                    cv.drawContours(img,[approx],i,(0,0,0),10)
         return (img, cx, cy)
     def detectByColorOnly(self,dimens=(720,405),erode=True,drawContours=True):
         """
@@ -117,38 +120,72 @@ class Detective:
         img = self.blurImg(img)
         mask = cv.inRange(img, self.shape.lowerb, self.shape.upperb)
         if erode:
-            mask = cv.erode(mask, np.ones((20,20),np.uint8))
+            mask = cv.erode(mask, np.ones(self.erodeSize,np.uint8))
         contours, _ = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         cx,cy=None,None
-        for cnt in contours:
+        for i,cnt in enumerate(contours,start=0):
             approx = cv.approxPolyDP(cnt, .001*cv.arcLength(cnt, True), True)
             area = cv.contourArea(approx)
             if self.verbose:
-                print("area",area)
+                print("contours:",len(approx))
+                print("area:",area)
             M = cv.moments(approx)
             cx, cy = (int(M['m10']/M['m00']),int(M['m01']/M['m00']))
             print("center:",(cx,cy))
             if drawContours:
-                cv.drawContours(img,[approx],-1,(0,0,0),10)
+                cv.drawContours(img,[approx],i,(0,0,0),10)
         return (img, cx, cy)
-    def detectByComplexAlgorithm(self,dimens=(720,405),erode=True,drawContours=True):
+    def detectByComplexAlgorithm(self,dimens=(720,405),erode=True,drawContours=True,numWhite=50):
         """
         !!!Not tested yet.
         Detects by number of corners (basically shape), color, area, threshold...
         Also, compares color mask and threshold mask for better accuracy...
         May result performance issues...
+        Arguments:
+        ==========
+        dimens (width, height): Determines the resize options just width & height
+        erode (bool): Removes noises smaller or equal to 20x20 if set to True
+        drawContours (bool): Draws contours if set to True
+        Experimental:
+        =============
+        numWhite (int): maximum difference between masks...
         """
-        pass
+        img = self.resizeImg(dimens)
+        img = self.blurImg(img)
+        if erode:
+            img = cv.erode(img, np.ones(self.erodeSize,np.uint8))
+        gry = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        mask0 = cv.inRange(img, self.shape.lowerb, self.shape.upperb)
+        _, threshold = cv.threshold(gry, self.shape.tmin, self.shape.tmax, cv.THRESH_BINARY)
+        cv.imshow("mask0",mask0)
+        cv.imshow("threshold",threshold)
+        subtracted = cv.subtract(mask0,threshold)
+        print("Array Len:",len(subtracted))
+        whites = np.count_nonzero(subtracted == 255)
+        if whites <= numWhite:
+            contours, _ = cv.findContours(mask0, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+            cx,cy=None,None
+            for i,cnt in enumerate(contours,start=0):
+                approx = cv.approxPolyDP(cnt, .001*cv.arcLength(cnt, True), True)
+                area = cv.contourArea(approx)
+                if self.verbose:
+                    print("contours:",len(approx))
+                    print("area:",area)
+                M = cv.moments(approx)
+                cx, cy = (int(M['m10']/M['m00']),int(M['m01']/M['m00']))
+                print("center:",(cx,cy))
+                if drawContours:
+                    cv.drawContours(img,[approx],i,(0,0,0),10)
+        return (img, cx, cy)
 
-"""
-shape = Shape(150,255,60000,100000,np.array([100,100,100]),np.array([180,180,180]))
+shape = Shape(100,255,60000,100000,np.array([100,100,100]),np.array([180,180,180]))
 detective = Detective(shape,cv.imread("media/out2.png"))
-img, cx, cy = detective.detectByColor()
+#img, cx, cy = detective.detectByColorOnly()
+detective.detectByComplexAlgorithm()
 
-cv.imshow("img", img)
+#cv.imshow("img", img)
 cv.waitKey(0)
 cv.destroyAllWindows()
-"""
 """
 shape = Shape(150,255,100,100000)
 detective = Detective(shape,cv.imread("media/out3.png"))
