@@ -42,11 +42,11 @@ class Detective:
 
     def resizeImg(self, dimens):
         return cv.resize(self.data,dimens)
-    def blurImg(self, img,i=10):
+    def blurImg(self, img,i=1):
         for _ in range(i):
             img = cv.GaussianBlur(img, (7,7), 1)
         return img
-    def detectByThresholding(self,dimens=(400,300),drawContours=True,inverted=False):
+    def detectByThresholding(self,dimens=(720,405),drawContours=True,inverted=False):
         """
         Detects object returns resized and blurred image, and X,Y coordinates of detected object
         Returns:
@@ -82,7 +82,7 @@ class Detective:
                     if drawContours:
                         cv.drawContours(img,[approx],i,(0,0,0),10)
         return (img, cx, cy, thresh, gry)
-    def detectByColor(self,dimens=(400,300),erode=True,drawContours=True):
+    def detectByColor(self,dimens=(720,405),erode=True,drawContours=True):
         """
         Detects the object by it's color and approximate area
         Returns:
@@ -115,7 +115,7 @@ class Detective:
                 if drawContours:
                     cv.drawContours(img,[approx],-1,(0,0,0),10)
         return (img, cx, cy)
-    def detectByColorOnly(self,dimens=(400,300),erode=True,drawContours=True):
+    def detectByColorOnly(self,dimens=(720,405),erode=True,drawContours=True):
         """
         Detects the object by it's color only
         Returns:
@@ -147,7 +147,7 @@ class Detective:
             if drawContours:
                 cv.drawContours(img,[approx],-1,(0,0,0),10)
         return (img, cx, cy)
-    def detectByHoughCircles(self,dimens=(400,300),erode=True,drawContours=True):
+    def detectByHoughCircles(self,dimens=(720,405),erode=True,drawContours=True):
         """
         !Not Recommended
         !Experimental
@@ -178,7 +178,7 @@ class Detective:
         if self.verbose:
             cv.imshow("circles",img)
         return (img,cx,cy)
-    def detectByCanny(self,dimens=(400,300),erode=True,drawContours=True,apertureSize=4,inverted=True,numWhite=50):
+    def detectByCanny(self,dimens=(720,405),erode=True,drawContours=True,apertureSize=4,inverted=True,numWhite=50):
         """
         !Not Recommended
         !Experimental
@@ -217,7 +217,7 @@ class Detective:
                 if drawContours:
                     cv.drawContours(img,[approx],-1,(0,0,0),10)
         return (img,cx,cy)
-    def detectByComplexAlgorithm(self,dimens=(400,300),erode=True,drawContours=True,inverted=True,numWhite=50):
+    def detectByComplexAlgorithm(self,dimens=(720,405),erode=True,drawContours=True,inverted=True,numWhite=50):
         """
         !Experimental
         Detects by number of corners (basically shape), color, area, threshold...
@@ -325,13 +325,13 @@ while True:
     shape = Shape(lb,ub,mina,maxa,np.array([lb,lg,lr]),np.array([ub,ug,ur]),cmin,cmax)
     ret, fra = cap.read()
     #fra = cv.cvtColor(fra, cv.COLOR_BGR2GRAY)
-    detective = Detective(shape,fra)
+    #detective = Detective(shape,fra)
     #fra, cx, cy = detective.detectByComplexAlgorithm(numWhite=numw,inverted=True)
     #fra, cx, cy = detective.detectByColorOnly()
     #fra, cx, cy = detective.detectByCanny(dimens=(400,300),apertureSize=7)
     #fra = cv.resize(fra,(640,480))
     #fra = cv.GaussianBlur(fra, (7,7), 1)
-    fra, cx, cy = detective.detectByHoughCircles()
+    #detective.detectByHoughCircles()
     #mask = cv.inRange(fra,np.array([90,140,80]),np.array([]))
     cv.imshow("fra",fra)
     if cv.waitKey(1) & 0xFF == ord('q'):
