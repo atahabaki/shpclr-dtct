@@ -81,6 +81,7 @@ class Detective:
                     print("center:",(cx,cy))
                     if drawContours:
                         cv.drawContours(img,[approx],i,(0,0,0),10)
+                        cv.line(img, (cx,cy), (img.shape[1],self.shape[0]),(0,0,0),10)
         return (img, cx, cy, thresh, gry)
     def detectByColor(self,dimens=(400,300),erode=True,drawContours=True):
         """
@@ -114,6 +115,7 @@ class Detective:
                 print("center:",(cx,cy))
                 if drawContours:
                     cv.drawContours(img,[approx],-1,(0,0,0),10)
+                    cv.line(img, (cx,cy), (img.shape[1],self.shape[0]),(0,0,0),10)
         return (img, cx, cy)
     def detectByColorOnly(self,dimens=(400,300),erode=True,drawContours=True):
         """
@@ -146,6 +148,7 @@ class Detective:
             print("center:",(cx,cy))
             if drawContours:
                 cv.drawContours(img,[approx],-1,(0,0,0),10)
+                cv.line(img, (cx,cy), (img.shape[1],self.shape[0]),(0,0,0),10)
         return (img, cx, cy)
     def detectByHoughCircles(self,dimens=(400,300),erode=True,drawContours=True):
         """
@@ -161,20 +164,21 @@ class Detective:
         """
         #img = self.resizeImg(dimens)
         img = self.data
-        img = self.blurImg(img,5)
+        img = self.blurImg(img)
         gry = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         if erode:
             img = cv.erode(img, np.ones(self.erodeSize,np.uint8))
         circles = cv.HoughCircles(gry, cv.HOUGH_GRADIENT, 1, 20, param1=50, param2=50, minRadius=0, maxRadius=0)
         cx,cy=None,None
         if circles is not None:
-            circles = np.uint16(np.around(circles))
-            for i in circles[0, :]:
-                center = (i[0], i[1])
+            crcls = np.uint16(np.around(circles))
+            for _,crc in enumerate(crcls):
+                center = (crc[0], crc[1])
                 cx,cy=center
                 cv.circle(img, center, 1, (0, 100, 100), 3)
-                radius = i[2]
+                radius = crc[2]
                 cv.circle(img, center, radius, (255, 0, 255), 3)
+                cv.line(img, (cx,cy), (img.shape[1],self.shape[0]),(0,0,0),10)
         if self.verbose:
             cv.imshow("circles",img)
         return (img,cx,cy)
@@ -216,6 +220,7 @@ class Detective:
                 print("center:",(cx,cy))
                 if drawContours:
                     cv.drawContours(img,[approx],-1,(0,0,0),10)
+                    cv.line(img, (cx,cy), (img.shape[1],self.shape[0]),(0,0,0),10)
         return (img,cx,cy)
     def detectByComplexAlgorithm(self,dimens=(400,300),erode=True,drawContours=True,inverted=True,numWhite=50):
         """
@@ -267,6 +272,7 @@ class Detective:
                     print("center:",(cx,cy))
                     if drawContours:
                         cv.drawContours(img,[approx],-1,(0,0,0),10)
+                        cv.line(img, (cx,cy), (img.shape[1],self.shape[0]),(0,0,0),10)
         return (img, cx, cy)
 
 def whoo(x):
