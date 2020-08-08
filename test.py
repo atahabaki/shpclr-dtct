@@ -42,7 +42,7 @@ class Detective:
 
     def resizeImg(self, dimens):
         return cv.resize(self.data,dimens)
-    def blurImg(self, img,i=15):
+    def blurImg(self, img,i=7):
         for _ in range(i):
             img = cv.GaussianBlur(img, (21,21), 1)
         return img
@@ -222,7 +222,7 @@ class Detective:
                     cv.drawContours(img,[approx],-1,(0,0,0),10)
                     cv.line(img, (cx,cy), (img.shape[1],self.shape[0]),(0,0,0),10)
         return (img,cx,cy)
-    def detectBySobel(self, dimens=(400,300), erode=True, drawContours=True):
+    def detectBySobelAndCanny(self, dimens=(400,300), erode=True, drawContours=True):
         scale = 1
         delta = 0
         ddepth = cv.CV_16S
@@ -237,11 +237,15 @@ class Detective:
         abs_grad_x = cv.convertScaleAbs(grad_x)
         abs_grad_y = cv.convertScaleAbs(grad_y)
         wght = cv.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
-        contours, _ = cv.findContours(wght, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        canny = cv.Canny(wght, self.shape.tmin, self.shape.tmax, 3, L2gradient=True)
+        if self.verbose:
+            cv.imshow("wght",wght)
+            cv.imshow("canny",canny)
+        contours, _ = cv.findContours(canny, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         for cnt in contours:
             approx = cv.approxPolyDP(cnt, .001*cv.arcLength(cnt, True), True)
             area = cv.contourArea(approx)
-            if area <= self.shape.amax and area >= self.shape.amin and len(approx) <= self.shape.cmax and len(approx) >= self.shape.cmin:
+            if area >= self.shape.amin and area <= self.shape.amax:
                 if self.verbose:
                     print("contours:",len(approx))
                     print("area:",area)
@@ -250,12 +254,8 @@ class Detective:
                     cx, cy = (int(M['m10']/M['m00']),int(M['m01']/M['m00']))
                 print("center:",(cx,cy))
                 if drawContours:
-                    cv.drawContours(img,[approx],-1,(0,0,0),10)
-                    cv.line(img, (cx,cy), (img.shape[1],self.shape[0]),(0,0,0),10)
+                    cv.drawContours(img,[approx],-1,(0,0,0),5)
         return (img,cx,cy)
-        # TODO detect contours
-        # TODO sort contours ares (bigger is the first)
-        # TODO draw contours
     def detectByComplexAlgorithm(self,dimens=(400,300),erode=True,drawContours=True,inverted=True,numWhite=50):
         """
         !Experimental
@@ -380,11 +380,13 @@ while True:
 cap.release()
 cv.destroyAllWindows()
 """
-shape = Shape(0,255,0,100000,np.array([173,84,91]),np.array([53,48,68]))
-detective = Detective(shape,cv.imread("media/red_pool.jpeg"))
-img,cx,cy = detective.detectBySobel()
+shape = Shape(0,70,30000,100000,np.array([173,84,91]),np.array([53,48,68]))
+detective = Detective(shape,cv.imread("media/red_pool3.jpg"))
+img,cx,cy = detective.detectBySobelAndCanny()
 cv.namedWindow("img",cv.WINDOW_NORMAL)
 cv.imshow("img", img)
+cv.namedWindow("nrm",cv.WINDOW_NORMAL)
+cv.imshow("nrm", detective.data)
 cv.waitKey(0)
 cv.destroyAllWindows()
 """
