@@ -309,9 +309,49 @@ class Detective:
                         cv.line(img, (cx,cy), (img.shape[1],self.shape[0]),(0,0,0),10)
         return (img, cx, cy)
 
+    def detectReds(self,dimens=(400,300),erode=True,drawContours=True):
+        """
+        Detects pure red stuff...
+        Arguments:
+        ==========
+        dimens (width, height): Determines the resize options just width & height
+        erode (bool): Removes noises smaller or equal to 20x20 if set to True
+        drawContours (bool): Draws contours if set to True
+        """
+        img = self.resizeImg(dimens)
+        img = self.blurImg(img)
+        if erode:
+            img = cv.erode(img, np.ones(self.erodeSize,np.uint8))
+        hsv=cv.cvtColor(img,cv.COLOR_BGR2HSV)
+        mask0=cv.inRange(hsv,np.array([0,70,50]),np.array([10,255,255]))
+        mask1=cv.inRange(hsv,np.array([170,70,50]),np.array([180,255,255]))
+        mask = mask0 | mask1
+        contours,_ = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        cx,cy=None,None
+        for cnt in contours:
+            approx = cv.approxPolyDP(cnt, .001*cv.arcLength(cnt,True), True)
+            area = cv.contourArea(approx)
+            if area <= self.shape.amax and area >= self.shape.amin and len(approx) <= self.shape.cmax and len(approx) >= self.shape.cmin:
+                if self.verbose:
+                    print("contours:",len(approx))
+                    print("area:",area)
+                M = cv.moments(approx)
+                if M['m00'] != 0:
+                    cx,cy = (int(M['m10']/M['m00']),int(M['m01']/M['m00']))
+                print("center:",(cx,cy))
+                if drawContours:
+                    cv.drawContours(img,[approx],-1,(0,0,0),10)
+        return (img,cx,cy)
+
 def whoo(x):
     pass
 
+shape = Shape(20,200,1000,100000,np.array([173,84,91]),np.array([53,48,68]),cmin=20,cmax=120)
+detective = Detective(shape,cv.imread("media/red_pool4.jpg"))
+img,cx,cy = detective.detectReds()
+cv.namedWindow("img",cv.WINDOW_NORMAL)
+cv.imshow("img", img)
+cv.waitKey(0)
 """
 #FOR GRAY shitty box:
 #LRGB: 55,62,75
@@ -380,6 +420,7 @@ while True:
 cap.release()
 cv.destroyAllWindows()
 """
+"""
 shape = Shape(0,70,30000,100000,np.array([173,84,91]),np.array([53,48,68]))
 detective = Detective(shape,cv.imread("media/red_pool3.jpg"))
 img,cx,cy = detective.detectBySobelAndCanny()
@@ -389,6 +430,7 @@ cv.namedWindow("nrm",cv.WINDOW_NORMAL)
 cv.imshow("nrm", detective.data)
 cv.waitKey(0)
 cv.destroyAllWindows()
+"""
 """
 shape = Shape(100,255,60000,100000,np.array([100,100,100]),np.array([180,180,180]))
 detective = Detective(shape,cv.imread("media/out2.png"))
